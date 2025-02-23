@@ -1,43 +1,19 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Bloco de Notas Avançado</title>
-  <link rel="stylesheet" href="popup.css">
+<meta charset="UTF-8">
+<title>Bloco de Notas</title>
+<link rel="stylesheet" href="popup.css">
 </head>
 <body>
+<div class="container">
   <header>
-    <h1>Minhas Notas</h1>
-    <button id="themeSwitch">Dark Mode</button>
+    <h1>Bloco de Notas</h1>
+    <button id="addNoteBtn">+</button>
   </header>
-
-  <div id="controls">
-    <input type="text" id="busca" placeholder="Buscar notas...">
-    <select id="ordenacao">
-      <option value="dataDesc" selected>Mais recentes</option>
-      <option value="dataAsc">Mais antigas</option>
-      <option value="tituloAsc">Título A-Z</option>
-      <option value="tituloDesc">Título Z-A</option>
-    </select>
-  </div>
-
-  <ul id="listaNotas"></ul>
-
-  <div class="editor-container">
-    <button id="novaNota">Nova Nota</button>
-    <div class="toolbar">
-      <button id="btnNegrito"><b>B</b></button>
-      <button id="btnItalico"><i>I</i></button>
-      <button id="btnSublinhado"><u>U</u></button>
-      <button id="btnLista">Lista •</button>
-    </div>
-    <div id="editor" contenteditable="true"></div>
-    <div id="acoesNota">
-      <button id="fixarNota">Fixar/Desfixar</button>
-      <button id="excluirNota">Excluir Nota</button>
-    </div>
-  </div>
-
-  <script src="popup.js"></script>
+  <div id="notesList"></div>
+  <textarea id="noteInput"></textarea>
+</div>
+<script src="popup.js"></script>
 </body>
 </html>
