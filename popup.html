@@ -11,10 +11,25 @@
     <h1>Bloco de Notas</h1>
     <button id="addNoteBtn">+</button>
   </header>
-  <input type="text" id="searchInput" placeholder="Pesquisar notas...">
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Pesquisar notas...">
+    <label>Exibir somente fixadas <input type="checkbox" id="filterPinned"></label>
+    <label>Data Inicial <input type="date" id="filterDateStart"></label>
+    <label>Data Final <input type="date" id="filterDateEnd"></label>
+    <input type="text" id="filterTags" placeholder="Filtrar por tags (separadas por vírgula)">
+    <input type="text" id="filterColor" placeholder="Filtrar por cor (ex: #ff0000)">
+  </div>
+  <div id="pinnedNotesList"></div>
   <div id="notesList"></div>
-  <input type="text" id="titleInput" placeholder="Título da nota...">
-  <textarea id="noteInput"></textarea>
+  <input type="text" id="titleInput" placeholder="Título da nota">
+  <textarea id="noteInput" placeholder="Conteúdo da nota"></textarea>
+  <input type="text" id="tagsInput" placeholder="Tags (separadas por vírgula)">
+  <label>Cor da nota <input type="color" id="colorInput" value="#ffffff"></label>
+  <label>Fixar <input type="checkbox" id="pinnedInput"></label>
+  <div id="historyContainer">
+    <h2>Histórico da Nota</h2>
+    <div id="historyList"></div>
+  </div>
 </div>
 <script src="popup.js"></script>
 </body>
