@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const darkModeToggle = document.getElementById('darkModeToggle')
   const formatButtons = document.querySelectorAll('.format-btn')
   const colorPaletteDiv = document.getElementById('colorPalette')
+  const saveFeedback = document.getElementById('saveFeedback')
+  const toggleHistoryBtn = document.getElementById('toggleHistoryBtn')
 
   chrome.storage.sync.get(['notes','darkModeEnabled'], function(result) {
     if (result.notes) {
@@ -147,30 +149,42 @@ document.addEventListener('DOMContentLoaded', function() {
   })
 
   formatButtons.forEach(btn => {
-    btn.addEventListener('click', function(e) {
+    btn.addEventListener('click', function() {
       const cmd = btn.getAttribute('data-cmd')
       document.execCommand(cmd, false, null)
       noteEditor.focus()
     })
   })
 
+  toggleHistoryBtn.addEventListener('click', function() {
+    if (historyList.style.display === 'none') {
+      historyList.style.display = 'block'
+      toggleHistoryBtn.textContent = 'Ocultar Histórico'
+    } else {
+      historyList.style.display = 'none'
+      toggleHistoryBtn.textContent = 'Mostrar Histórico'
+    }
+  })
+
   function updateNoteField(field, value) {
     if (currentNoteIndex !== null && notes[currentNoteIndex]) {
+      const oldNote = JSON.parse(JSON.stringify(notes[currentNoteIndex]))
       notes[currentNoteIndex][field] = value
       notes[currentNoteIndex].updatedAt = Date.now()
-      addHistoryEntry(notes[currentNoteIndex])
+      addHistoryEntry(notes[currentNoteIndex], oldNote)
       saveNotes()
       renderNotes()
+      showSaveFeedback()
     }
   }
 
-  function addHistoryEntry(note) {
+  function addHistoryEntry(note, oldNote) {
     note.history.push({
-      title: note.title,
-      content: note.content,
-      tags: note.tags,
-      color: note.color,
-      pinned: note.pinned,
+      title: oldNote.title,
+      content: oldNote.content,
+      tags: oldNote.tags,
+      color: oldNote.color,
+      pinned: oldNote.pinned,
       timestamp: Date.now()
     })
     if (note.history.length > 50) {
@@ -236,7 +250,8 @@ document.addEventListener('DOMContentLoaded', function() {
         ' | Título: ' + entry.title +
         ' | Tags: ' + entry.tags.join(', ') +
         ' | Cor: ' + entry.color +
-        ' | Fixada: ' + (entry.pinned ? 'Sim' : 'Não')
+        ' | Fixada: ' + (entry.pinned ? 'Sim' : 'Não') +
+        ' | Conteúdo: ' + stripHtml(entry.content)
       historyList.appendChild(entryDiv)
     })
   }
@@ -331,6 +346,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (g.length === 1) g = '0' + g
     if (b.length === 1) b = '0' + b
     return '#' + r + g + b
+  }
+
+  function stripHtml(html) {
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = html
+    return tempDiv.textContent || tempDiv.innerText || ''
+  }
+
+  function showSaveFeedback() {
+    saveFeedback.style.display = 'block'
+    setTimeout(() => {
+      saveFeedback.style.display = 'none'
+    }, 2000)
   }
 
   function saveNotes() {
