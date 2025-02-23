@@ -1,0 +1,15 @@
+/*! Bootstrap v5.3.0 (https://getbootstrap.com/) */
+:root{--bs-blue:#0d6efd;--bs-indigo:#6610f2;...etc...}
+...
+/* (Cole aqui todo o conteúdo minificado do Bootstrap 5.3) */
+...
+.collapsing{height:0;overflow:hidden;transition:height .35s ease;}
+/*! fade */
+.fade{transition:opacity .15s linear}
+.fade:not(.show){opacity:0}
+...
+/*! modal */
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;z-index:1055;display:none;outline:0}
+.modal-open{overflow:hidden}
+...
+/*! fim do bootstrap.min.css */
