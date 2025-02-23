@@ -6,29 +6,55 @@
 <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-<div class="container">
-  <header>
+<div class="app-container">
+  <header class="app-header">
     <h1>Bloco de Notas</h1>
-    <button id="addNoteBtn">+</button>
+    <div class="header-right">
+      <button id="openSettingsBtn" class="icon-button">⚙</button>
+      <button id="addNoteBtn" class="icon-button">+</button>
+    </div>
   </header>
-  <div class="filters">
-    <input type="text" id="searchInput" placeholder="Pesquisar notas...">
-    <label>Exibir somente fixadas <input type="checkbox" id="filterPinned"></label>
-    <label>Data Inicial <input type="date" id="filterDateStart"></label>
-    <label>Data Final <input type="date" id="filterDateEnd"></label>
-    <input type="text" id="filterTags" placeholder="Filtrar por tags (separadas por vírgula)">
-    <input type="text" id="filterColor" placeholder="Filtrar por cor (ex: #ff0000)">
+
+  <div class="settings-panel" id="settingsPanel">
+    <h2>Configurações</h2>
+    <div class="settings-row">
+      <label for="darkModeToggle">Modo Escuro</label>
+      <input type="checkbox" id="darkModeToggle">
+    </div>
+    <button id="closeSettingsBtn" class="close-settings">Fechar</button>
   </div>
-  <div id="pinnedNotesList"></div>
-  <div id="notesList"></div>
-  <input type="text" id="titleInput" placeholder="Título da nota">
-  <textarea id="noteInput" placeholder="Conteúdo da nota"></textarea>
-  <input type="text" id="tagsInput" placeholder="Tags (separadas por vírgula)">
-  <label>Cor da nota <input type="color" id="colorInput" value="#ffffff"></label>
-  <label>Fixar <input type="checkbox" id="pinnedInput"></label>
-  <div id="historyContainer">
-    <h2>Histórico da Nota</h2>
-    <div id="historyList"></div>
+
+  <div class="main-content">
+    <div class="left-panel">
+      <div class="filters">
+        <input type="text" id="searchInput" placeholder="Pesquisar...">
+        <label class="check-filter">Fixadas <input type="checkbox" id="filterPinned"></label>
+        <label>Data Inicial <input type="date" id="filterDateStart"></label>
+        <label>Data Final <input type="date" id="filterDateEnd"></label>
+        <input type="text" id="filterTags" placeholder="Tags (ex: trabalho, casa)">
+        <input type="text" id="filterColor" placeholder="Cor (ex: #ff0000)">
+      </div>
+      <div id="pinnedNotesList" class="notes-list"></div>
+      <div id="notesList" class="notes-list"></div>
+    </div>
+
+    <div class="right-panel">
+      <div id="modeIndicator">Adicionando nova nota</div>
+      <input type="text" id="titleInput" placeholder="Título da nota">
+      <div class="editor-toolbar">
+        <button class="format-btn" data-cmd="bold">B</button>
+        <button class="format-btn" data-cmd="italic">I</button>
+        <button class="format-btn" data-cmd="underline">U</button>
+      </div>
+      <div id="noteEditor" contenteditable="true" class="note-editor"></div>
+      <input type="text" id="tagsInput" placeholder="Tags (separadas por vírgula)">
+      <div class="color-palette" id="colorPalette"></div>
+      <label class="check-pin">Fixar <input type="checkbox" id="pinnedInput"></label>
+      <div id="historyContainer">
+        <h2>Histórico</h2>
+        <div id="historyList"></div>
+      </div>
+    </div>
   </div>
 </div>
 <script src="popup.js"></script>
