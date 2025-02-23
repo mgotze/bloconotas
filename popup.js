@@ -6,7 +6,6 @@ let typingTimerTags
 let typingTimerPinned
 let filterValue = ''
 const doneTypingInterval = 2000
-const colorPaletteSize = 60
 let darkModeEnabled = false
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const filterDateStart = document.getElementById('filterDateStart')
   const filterDateEnd = document.getElementById('filterDateEnd')
   const filterTags = document.getElementById('filterTags')
-  const filterColor = document.getElementById('filterColor')
   const notesList = document.getElementById('notesList')
   const pinnedNotesList = document.getElementById('pinnedNotesList')
   const titleInput = document.getElementById('titleInput')
@@ -25,14 +23,25 @@ document.addEventListener('DOMContentLoaded', function() {
   const pinnedInput = document.getElementById('pinnedInput')
   const historyList = document.getElementById('historyList')
   const modeIndicator = document.getElementById('modeIndicator')
-  const settingsPanel = document.getElementById('settingsPanel')
   const openSettingsBtn = document.getElementById('openSettingsBtn')
   const closeSettingsBtn = document.getElementById('closeSettingsBtn')
-  const darkModeToggle = document.getElementById('darkModeToggle')
-  const formatButtons = document.querySelectorAll('.format-btn')
-  const colorPaletteDiv = document.getElementById('colorPalette')
+  const noteOptionsSelect = document.getElementById('noteOptions')
   const saveFeedback = document.getElementById('saveFeedback')
   const toggleHistoryBtn = document.getElementById('toggleHistoryBtn')
+  const settingsPanel = document.getElementById('settingsPanel')
+  const darkModeToggle = document.getElementById('darkModeToggle')
+  const formatButtons = document.querySelectorAll('.format-btn')
+  const appContainer = document.getElementById('appContainer')
+  const appHeader = document.getElementById('appHeader')
+  const leftPanel = document.getElementById('leftPanel')
+  const rightPanel = document.getElementById('rightPanel')
+  const removeNoteBtn = document.getElementById('removeNoteBtn')
+  const bgColorSelect = document.getElementById('bgColorSelect')
+  const titleColorSelect = document.getElementById('titleColorSelect')
+  const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'))
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn')
+  const historyModal = new bootstrap.Modal(document.getElementById('historyModal'))
+  const historyModalBody = document.getElementById('historyModalBody')
 
   chrome.storage.sync.get(['notes','darkModeEnabled'], function(result) {
     if (result.notes) {
@@ -40,10 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (result.darkModeEnabled === true) {
       darkModeEnabled = true
-      document.body.classList.add('dark-mode')
+      enableDarkMode(true)
       darkModeToggle.checked = true
     }
-    createColorPalette()
     renderNotes()
   })
 
@@ -59,11 +67,13 @@ document.addEventListener('DOMContentLoaded', function() {
       title: novoTitulo,
       content: '',
       tags: [],
-      color: '#ffffff',
       pinned: false,
       createdAt: now,
       updatedAt: now,
-      history: []
+      history: [],
+      noteOption: '',
+      bgColor: '#ffffff',
+      titleColor: '#000000'
     })
     currentNoteIndex = notes.length - 1
     saveNotes()
@@ -71,6 +81,55 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCurrentNote()
     modeIndicator.textContent = 'Adicionando nova nota'
     titleInput.focus()
+  })
+
+  removeNoteBtn.addEventListener('click', function() {
+    if (currentNoteIndex !== null && notes[currentNoteIndex]) {
+      confirmDeleteModal.show()
+    }
+  })
+
+  confirmDeleteBtn.addEventListener('click', function() {
+    if (currentNoteIndex !== null && notes[currentNoteIndex]) {
+      notes.splice(currentNoteIndex, 1)
+      currentNoteIndex = null
+      saveNotes()
+      renderNotes()
+      clearFields()
+    }
+    confirmDeleteModal.hide()
+  })
+
+  openSettingsBtn.addEventListener('click', function() {
+    settingsPanel.style.display = 'block'
+  })
+
+  closeSettingsBtn.addEventListener('click', function() {
+    settingsPanel.style.display = 'none'
+  })
+
+  darkModeToggle.addEventListener('change', function() {
+    darkModeEnabled = darkModeToggle.checked
+    enableDarkMode(darkModeEnabled)
+    chrome.storage.sync.set({ darkModeEnabled: darkModeEnabled }, function() {})
+  })
+
+  formatButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const cmd = btn.getAttribute('data-cmd')
+      document.execCommand(cmd, false, null)
+      noteEditor.focus()
+    })
+  })
+
+  toggleHistoryBtn.addEventListener('click', function() {
+    if (historyList.style.display === 'none') {
+      historyList.style.display = 'block'
+      toggleHistoryBtn.textContent = 'Ocultar'
+    } else {
+      historyList.style.display = 'none'
+      toggleHistoryBtn.textContent = 'Mostrar'
+    }
   })
 
   searchInput.addEventListener('input', function() {
@@ -91,10 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
   })
 
   filterTags.addEventListener('input', function() {
-    renderNotes()
-  })
-
-  filterColor.addEventListener('input', function() {
     renderNotes()
   })
 
@@ -130,62 +185,79 @@ document.addEventListener('DOMContentLoaded', function() {
     }, doneTypingInterval)
   })
 
-  openSettingsBtn.addEventListener('click', function() {
-    settingsPanel.style.display = 'block'
+  noteOptionsSelect.addEventListener('change', function() {
+    updateNoteField('noteOption', noteOptionsSelect.value)
   })
 
-  closeSettingsBtn.addEventListener('click', function() {
-    settingsPanel.style.display = 'none'
+  bgColorSelect.addEventListener('change', function() {
+    updateNoteField('bgColor', bgColorSelect.value)
   })
 
-  darkModeToggle.addEventListener('change', function() {
-    darkModeEnabled = darkModeToggle.checked
-    if (darkModeEnabled) {
-      document.body.classList.add('dark-mode')
-    } else {
-      document.body.classList.remove('dark-mode')
+  titleColorSelect.addEventListener('change', function() {
+    updateNoteField('titleColor', titleColorSelect.value)
+  })
+
+  function loadCurrentNote() {
+    if (currentNoteIndex !== null && notes[currentNoteIndex]) {
+      const n = notes[currentNoteIndex]
+      titleInput.value = n.title
+      noteEditor.innerHTML = n.content
+      tagsInput.value = n.tags.join(', ')
+      pinnedInput.checked = n.pinned
+      noteOptionsSelect.value = n.noteOption || ''
+      bgColorSelect.value = n.bgColor || '#ffffff'
+      titleColorSelect.value = n.titleColor || '#000000'
+      modeIndicator.textContent = 'Editando nota existente'
+      renderHistory(n)
     }
-    chrome.storage.sync.set({ darkModeEnabled: darkModeEnabled }, function() {})
-  })
+  }
 
-  formatButtons.forEach(btn => {
-    btn.addEventListener('click', function() {
-      const cmd = btn.getAttribute('data-cmd')
-      document.execCommand(cmd, false, null)
-      noteEditor.focus()
-    })
-  })
+  function clearFields() {
+    titleInput.value = ''
+    noteEditor.innerHTML = ''
+    tagsInput.value = ''
+    pinnedInput.checked = false
+    noteOptionsSelect.value = ''
+    bgColorSelect.value = '#ffffff'
+    titleColorSelect.value = '#000000'
+    historyList.innerHTML = ''
+    modeIndicator.textContent = 'Adicionando nova nota'
+  }
 
-  toggleHistoryBtn.addEventListener('click', function() {
-    if (historyList.style.display === 'none') {
-      historyList.style.display = 'block'
-      toggleHistoryBtn.textContent = 'Ocultar Histórico'
+  function enableDarkMode(enable) {
+    if (enable) {
+      appContainer.classList.add('dark-mode')
+      appHeader.classList.add('dark-mode')
+      leftPanel.classList.add('dark-mode')
+      rightPanel.classList.add('dark-mode')
+      settingsPanel.classList.add('dark-mode')
     } else {
-      historyList.style.display = 'none'
-      toggleHistoryBtn.textContent = 'Mostrar Histórico'
+      appContainer.classList.remove('dark-mode')
+      appHeader.classList.remove('dark-mode')
+      leftPanel.classList.remove('dark-mode')
+      rightPanel.classList.remove('dark-mode')
+      settingsPanel.classList.remove('dark-mode')
     }
-  })
+  }
 
   function updateNoteField(field, value) {
     if (currentNoteIndex !== null && notes[currentNoteIndex]) {
-      const oldNote = JSON.parse(JSON.stringify(notes[currentNoteIndex]))
+      const oldContent = notes[currentNoteIndex].content
       notes[currentNoteIndex][field] = value
       notes[currentNoteIndex].updatedAt = Date.now()
-      addHistoryEntry(notes[currentNoteIndex], oldNote)
+      if (field === 'content') {
+        addHistoryEntry(notes[currentNoteIndex], oldContent)
+      }
       saveNotes()
       renderNotes()
       showSaveFeedback()
     }
   }
 
-  function addHistoryEntry(note, oldNote) {
+  function addHistoryEntry(note, oldContent) {
     note.history.push({
-      title: oldNote.title,
-      content: oldNote.content,
-      tags: oldNote.tags,
-      color: oldNote.color,
-      pinned: oldNote.pinned,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      content: note.content
     })
     if (note.history.length > 50) {
       note.history.shift()
@@ -209,29 +281,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (note.pinned) {
       div.classList.add('note-pinned')
     }
-    div.style.backgroundColor = note.color
+    div.style.backgroundColor = note.bgColor
     const titleDiv = document.createElement('div')
     titleDiv.className = 'note-item-title'
+    titleDiv.style.color = note.titleColor
     titleDiv.textContent = note.title
     div.appendChild(titleDiv)
     div.addEventListener('click', function() {
       currentNoteIndex = index
       loadCurrentNote()
-      modeIndicator.textContent = 'Editando nota existente'
     })
     return div
-  }
-
-  function loadCurrentNote() {
-    if (currentNoteIndex !== null && notes[currentNoteIndex]) {
-      const n = notes[currentNoteIndex]
-      titleInput.value = n.title
-      noteEditor.innerHTML = n.content
-      tagsInput.value = n.tags.join(', ')
-      pinnedInput.checked = n.pinned
-      renderHistory(n)
-      setActiveSwatch(n.color)
-    }
   }
 
   function renderHistory(note) {
@@ -243,15 +303,15 @@ document.addEventListener('DOMContentLoaded', function() {
       const ano = d.getFullYear()
       const hora = String(d.getHours()).padStart(2, '0')
       const min = String(d.getMinutes()).padStart(2, '0')
+
       const entryDiv = document.createElement('div')
       entryDiv.className = 'history-entry'
-      entryDiv.textContent =
-        dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min +
-        ' | Título: ' + entry.title +
-        ' | Tags: ' + entry.tags.join(', ') +
-        ' | Cor: ' + entry.color +
-        ' | Fixada: ' + (entry.pinned ? 'Sim' : 'Não') +
-        ' | Conteúdo: ' + stripHtml(entry.content)
+      entryDiv.textContent = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min
+      entryDiv.addEventListener('click', function(e) {
+        e.stopPropagation()
+        historyModalBody.textContent = stripHtml(entry.content)
+        historyModal.show()
+      })
       historyList.appendChild(entryDiv)
     })
   }
@@ -261,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateStartValue = filterDateStart.value
     const dateEndValue = filterDateEnd.value
     const tagsValue = filterTags.value.toLowerCase()
-    const colorValue = filterColor.value.toLowerCase()
     if (pinnedOnly && !note.pinned) {
       return false
     }
@@ -280,11 +339,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return false
       }
     }
-    if (colorValue) {
-      if (!note.color.toLowerCase().includes(colorValue)) {
-        return false
-      }
-    }
     if (dateStartValue) {
       const startTime = new Date(dateStartValue).getTime()
       if (note.createdAt < startTime) {
@@ -300,54 +354,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return true
   }
 
-  function createColorPalette() {
-    const colors = generateColorArray(colorPaletteSize)
-    colors.forEach(color => {
-      const swatch = document.createElement('div')
-      swatch.className = 'color-swatch'
-      swatch.style.backgroundColor = color
-      swatch.addEventListener('click', function() {
-        updateNoteField('color', color)
-        setActiveSwatch(color)
-      })
-      colorPaletteDiv.appendChild(swatch)
-    })
-  }
-
-  function setActiveSwatch(color) {
-    const swatches = document.querySelectorAll('.color-swatch')
-    swatches.forEach(s => {
-      const bg = rgbToHex(s.style.backgroundColor)
-      if (bg === color.toLowerCase()) {
-        s.style.outline = '2px solid #000'
-      } else {
-        s.style.outline = 'none'
-      }
-    })
-  }
-
-  function generateColorArray(num) {
-    const result = []
-    for (let i = 0; i < num; i++) {
-      const hue = Math.floor((360 / num) * i)
-      const saturation = 60 + Math.floor(Math.random() * 40)
-      const lightness = 50
-      result.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`)
-    }
-    return result
-  }
-
-  function rgbToHex(rgb) {
-    const parts = rgb.replace(/[^\d,]/g, '').split(',')
-    let r = parseInt(parts[0]).toString(16)
-    let g = parseInt(parts[1]).toString(16)
-    let b = parseInt(parts[2]).toString(16)
-    if (r.length === 1) r = '0' + r
-    if (g.length === 1) g = '0' + g
-    if (b.length === 1) b = '0' + b
-    return '#' + r + g + b
-  }
-
   function stripHtml(html) {
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = html
@@ -355,14 +361,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showSaveFeedback() {
-    saveFeedback.style.display = 'block'
+    saveFeedback.classList.remove('d-none')
     setTimeout(() => {
-      saveFeedback.style.display = 'none'
-    }, 2000)
+      saveFeedback.classList.add('d-none')
+    }, 1500)
   }
 
   function saveNotes() {
     chrome.storage.sync.set({ notes: notes, darkModeEnabled: darkModeEnabled }, function() {})
   }
 })
-
