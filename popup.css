@@ -245,20 +245,32 @@ body.dark-mode #tagsInput {
   margin-bottom: 10px;
 }
 
+.save-feedback {
+  display: none;
+  color: #4caf50;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
 #historyContainer {
   margin-top: 10px;
   border-top: 1px solid #ccc;
   padding-top: 5px;
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-#historyContainer h2 {
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 5px;
 }
 
 #historyList {
-  max-height: 140px;
+  flex: 1;
   overflow-y: auto;
   border: 1px solid #ddd;
   padding: 5px;
