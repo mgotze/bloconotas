@@ -1,10 +1,14 @@
 let notes = []
 let currentNoteIndex = null
-let typingTimer
+let typingTimerTitle
+let typingTimerContent
+let filterValue = ''
 const doneTypingInterval = 2000
 
 document.addEventListener('DOMContentLoaded', function() {
   const addNoteBtn = document.getElementById('addNoteBtn')
+  const searchInput = document.getElementById('searchInput')
+  const titleInput = document.getElementById('titleInput')
   const noteInput = document.getElementById('noteInput')
   const notesList = document.getElementById('notesList')
 
@@ -25,13 +29,29 @@ document.addEventListener('DOMContentLoaded', function() {
     currentNoteIndex = notes.length - 1
     saveNotes()
     renderNotes()
-    noteInput.value = notes[currentNoteIndex].content
-    noteInput.focus()
+    loadCurrentNote()
+    titleInput.focus()
+  })
+
+  searchInput.addEventListener('input', function() {
+    filterValue = searchInput.value
+    renderNotes()
+  })
+
+  titleInput.addEventListener('input', function() {
+    clearTimeout(typingTimerTitle)
+    typingTimerTitle = setTimeout(function() {
+      if (currentNoteIndex !== null && notes[currentNoteIndex]) {
+        notes[currentNoteIndex].title = titleInput.value
+        saveNotes()
+        renderNotes()
+      }
+    }, doneTypingInterval)
   })
 
   noteInput.addEventListener('input', function() {
-    clearTimeout(typingTimer)
-    typingTimer = setTimeout(function() {
+    clearTimeout(typingTimerContent)
+    typingTimerContent = setTimeout(function() {
       if (currentNoteIndex !== null && notes[currentNoteIndex]) {
         notes[currentNoteIndex].content = noteInput.value
         saveNotes()
@@ -41,16 +61,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function renderNotes() {
     notesList.innerHTML = ''
-    notes.forEach((note, index) => {
+    const filteredNotes = notes.filter((note) =>
+      note.title.toLowerCase().includes(filterValue.toLowerCase()) ||
+      note.content.toLowerCase().includes(filterValue.toLowerCase())
+    )
+    filteredNotes.forEach((note, index) => {
       const div = document.createElement('div')
-      div.textContent = note.title
       div.className = 'note-title'
+      div.textContent = note.title
       div.addEventListener('click', function() {
-        currentNoteIndex = index
-        noteInput.value = notes[index].content
+        const realIndex = notes.indexOf(note)
+        currentNoteIndex = realIndex
+        loadCurrentNote()
       })
       notesList.appendChild(div)
     })
+  }
+
+  function loadCurrentNote() {
+    if (currentNoteIndex !== null && notes[currentNoteIndex]) {
+      titleInput.value = notes[currentNoteIndex].title
+      noteInput.value = notes[currentNoteIndex].content
+    }
   }
 
   function saveNotes() {
