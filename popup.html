@@ -50,8 +50,12 @@
       <input type="text" id="tagsInput" placeholder="Tags (separadas por vírgula)">
       <div class="color-palette" id="colorPalette"></div>
       <label class="check-pin">Fixar <input type="checkbox" id="pinnedInput"></label>
+      <div class="save-feedback" id="saveFeedback">Nota salva!</div>
       <div id="historyContainer">
-        <h2>Histórico</h2>
+        <div class="history-header">
+          <h2>Histórico</h2>
+          <button id="toggleHistoryBtn">Ocultar Histórico</button>
+        </div>
         <div id="historyList"></div>
       </div>
     </div>
