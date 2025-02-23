@@ -3,10 +3,11 @@ let currentNoteIndex = null
 let typingTimerTitle
 let typingTimerContent
 let typingTimerTags
-let typingTimerColor
 let typingTimerPinned
 let filterValue = ''
 const doneTypingInterval = 2000
+const colorPaletteSize = 60
+let darkModeEnabled = false
 
 document.addEventListener('DOMContentLoaded', function() {
   const addNoteBtn = document.getElementById('addNoteBtn')
@@ -19,16 +20,28 @@ document.addEventListener('DOMContentLoaded', function() {
   const notesList = document.getElementById('notesList')
   const pinnedNotesList = document.getElementById('pinnedNotesList')
   const titleInput = document.getElementById('titleInput')
-  const noteInput = document.getElementById('noteInput')
+  const noteEditor = document.getElementById('noteEditor')
   const tagsInput = document.getElementById('tagsInput')
-  const colorInput = document.getElementById('colorInput')
   const pinnedInput = document.getElementById('pinnedInput')
   const historyList = document.getElementById('historyList')
+  const modeIndicator = document.getElementById('modeIndicator')
+  const settingsPanel = document.getElementById('settingsPanel')
+  const openSettingsBtn = document.getElementById('openSettingsBtn')
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn')
+  const darkModeToggle = document.getElementById('darkModeToggle')
+  const formatButtons = document.querySelectorAll('.format-btn')
+  const colorPaletteDiv = document.getElementById('colorPalette')
 
-  chrome.storage.sync.get(['notes'], function(result) {
+  chrome.storage.sync.get(['notes','darkModeEnabled'], function(result) {
     if (result.notes) {
       notes = result.notes
     }
+    if (result.darkModeEnabled === true) {
+      darkModeEnabled = true
+      document.body.classList.add('dark-mode')
+      darkModeToggle.checked = true
+    }
+    createColorPalette()
     renderNotes()
   })
 
@@ -37,8 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const dia = String(hoje.getDate()).padStart(2, '0')
     const mes = String(hoje.getMonth() + 1).padStart(2, '0')
     const ano = hoje.getFullYear()
-    const novoTitulo = dia + '/' + mes + '/' + ano
     const now = Date.now()
+    const novoTitulo = dia + '/' + mes + '/' + ano
+
     notes.push({
       title: novoTitulo,
       content: '',
@@ -53,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
     saveNotes()
     renderNotes()
     loadCurrentNote()
+    modeIndicator.textContent = 'Adicionando nova nota'
     titleInput.focus()
   })
 
@@ -88,10 +103,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }, doneTypingInterval)
   })
 
-  noteInput.addEventListener('input', function() {
+  noteEditor.addEventListener('input', function() {
     clearTimeout(typingTimerContent)
     typingTimerContent = setTimeout(function() {
-      updateNoteField('content', noteInput.value)
+      updateNoteField('content', noteEditor.innerHTML)
     }, doneTypingInterval)
   })
 
@@ -106,18 +121,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }, doneTypingInterval)
   })
 
-  colorInput.addEventListener('input', function() {
-    clearTimeout(typingTimerColor)
-    typingTimerColor = setTimeout(function() {
-      updateNoteField('color', colorInput.value)
-    }, doneTypingInterval)
-  })
-
   pinnedInput.addEventListener('change', function() {
     clearTimeout(typingTimerPinned)
     typingTimerPinned = setTimeout(function() {
       updateNoteField('pinned', pinnedInput.checked)
     }, doneTypingInterval)
+  })
+
+  openSettingsBtn.addEventListener('click', function() {
+    settingsPanel.style.display = 'block'
+  })
+
+  closeSettingsBtn.addEventListener('click', function() {
+    settingsPanel.style.display = 'none'
+  })
+
+  darkModeToggle.addEventListener('change', function() {
+    darkModeEnabled = darkModeToggle.checked
+    if (darkModeEnabled) {
+      document.body.classList.add('dark-mode')
+    } else {
+      document.body.classList.remove('dark-mode')
+    }
+    chrome.storage.sync.set({ darkModeEnabled: darkModeEnabled }, function() {})
+  })
+
+  formatButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const cmd = btn.getAttribute('data-cmd')
+      document.execCommand(cmd, false, null)
+      noteEditor.focus()
+    })
   })
 
   function updateNoteField(field, value) {
@@ -169,6 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
     div.addEventListener('click', function() {
       currentNoteIndex = index
       loadCurrentNote()
+      modeIndicator.textContent = 'Editando nota existente'
     })
     return div
   }
@@ -177,11 +212,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (currentNoteIndex !== null && notes[currentNoteIndex]) {
       const n = notes[currentNoteIndex]
       titleInput.value = n.title
-      noteInput.value = n.content
+      noteEditor.innerHTML = n.content
       tagsInput.value = n.tags.join(', ')
-      colorInput.value = n.color
       pinnedInput.checked = n.pinned
       renderHistory(n)
+      setActiveSwatch(n.color)
     }
   }
 
@@ -207,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function applyFilters(note) {
-    const text = searchInput.value.toLowerCase()
     const pinnedOnly = filterPinned.checked
     const dateStartValue = filterDateStart.value
     const dateEndValue = filterDateEnd.value
@@ -216,10 +250,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (pinnedOnly && !note.pinned) {
       return false
     }
-    if (text) {
-      const inTitle = note.title.toLowerCase().includes(text)
-      const inContent = note.content.toLowerCase().includes(text)
-      const inTags = note.tags.join(',').toLowerCase().includes(text)
+    if (filterValue) {
+      const inTitle = note.title.toLowerCase().includes(filterValue.toLowerCase())
+      const inContent = note.content.toLowerCase().includes(filterValue.toLowerCase())
+      const inTags = note.tags.join(',').toLowerCase().includes(filterValue.toLowerCase())
       if (!inTitle && !inContent && !inTags) {
         return false
       }
@@ -251,7 +285,55 @@ document.addEventListener('DOMContentLoaded', function() {
     return true
   }
 
+  function createColorPalette() {
+    const colors = generateColorArray(colorPaletteSize)
+    colors.forEach(color => {
+      const swatch = document.createElement('div')
+      swatch.className = 'color-swatch'
+      swatch.style.backgroundColor = color
+      swatch.addEventListener('click', function() {
+        updateNoteField('color', color)
+        setActiveSwatch(color)
+      })
+      colorPaletteDiv.appendChild(swatch)
+    })
+  }
+
+  function setActiveSwatch(color) {
+    const swatches = document.querySelectorAll('.color-swatch')
+    swatches.forEach(s => {
+      const bg = rgbToHex(s.style.backgroundColor)
+      if (bg === color.toLowerCase()) {
+        s.style.outline = '2px solid #000'
+      } else {
+        s.style.outline = 'none'
+      }
+    })
+  }
+
+  function generateColorArray(num) {
+    const result = []
+    for (let i = 0; i < num; i++) {
+      const hue = Math.floor((360 / num) * i)
+      const saturation = 60 + Math.floor(Math.random() * 40)
+      const lightness = 50
+      result.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`)
+    }
+    return result
+  }
+
+  function rgbToHex(rgb) {
+    const parts = rgb.replace(/[^\d,]/g, '').split(',')
+    let r = parseInt(parts[0]).toString(16)
+    let g = parseInt(parts[1]).toString(16)
+    let b = parseInt(parts[2]).toString(16)
+    if (r.length === 1) r = '0' + r
+    if (g.length === 1) g = '0' + g
+    if (b.length === 1) b = '0' + b
+    return '#' + r + g + b
+  }
+
   function saveNotes() {
-    chrome.storage.sync.set({ notes: notes }, function() {})
+    chrome.storage.sync.set({ notes: notes, darkModeEnabled: darkModeEnabled }, function() {})
   }
 })
