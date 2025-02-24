@@ -1,75 +1,22 @@
 [
   {
-    "value": 1.13,
+    "value": 1.71,
     "currentMenores": 0,
     "maxMenores": 0,
-    "currentMaiores": 3,
-    "maxMaiores": 3,
-    "history": [
-      {
-        "timestamp": 1740440882933,
-        "currentMen": 0,
-        "maxMen": 0,
-        "currentMai": 1,
-        "maxMai": 1
-      },
-      {
-        "timestamp": 1740440924482,
-        "currentMen": 0,
-        "maxMen": 0,
-        "currentMai": 2,
-        "maxMai": 2
-      },
-      {
-        "timestamp": 1740440943948,
-        "currentMen": 0,
-        "maxMen": 0,
-        "currentMai": 3,
-        "maxMai": 3
-      }
-    ]
-  },
-  {
-    "value": 4.42,
-    "currentMenores": 1,
-    "maxMenores": 1,
-    "currentMaiores": 0,
+    "currentMaiores": 1,
     "maxMaiores": 1,
     "history": [
       {
-        "timestamp": 1740440924482,
+        "timestamp": 1740441259646,
         "currentMen": 0,
         "maxMen": 0,
         "currentMai": 1,
         "maxMai": 1
-      },
-      {
-        "timestamp": 1740440943948,
-        "currentMen": 1,
-        "maxMen": 1,
-        "currentMai": 0,
-        "maxMai": 1
       }
     ]
   },
   {
-    "value": 6.06,
-    "currentMenores": 1,
-    "maxMenores": 1,
-    "currentMaiores": 0,
-    "maxMaiores": 0,
-    "history": [
-      {
-        "timestamp": 1740440943948,
-        "currentMen": 1,
-        "maxMen": 1,
-        "currentMai": 0,
-        "maxMai": 0
-      }
-    ]
-  },
-  {
-    "value": 1.59,
+    "value": 3.12,
     "currentMenores": 0,
     "maxMenores": 0,
     "currentMaiores": 0,
